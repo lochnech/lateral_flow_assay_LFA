@@ -1,0 +1,32 @@
+# IDE
+.idea/
+.vscode/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual Environment
+venv/
+env/
+ENV/
+.env
+.venv
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+# Project specific
+data/
+saved_images/
+models/
+*.pth
+*.pth.tar
+*.log 
+
+# MacOS
+.DS_Store
