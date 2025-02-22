@@ -3,6 +3,7 @@ import torchvision
 from dataset import LFADataset
 from torch.utils.data import DataLoader, random_split
 
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 def save_checkpoint(state, filename="my_checkpoint.pth.tar"):
     print("=> Saving checkpoint")
@@ -54,7 +55,7 @@ def get_loaders(
     return train_loader, val_loader
 
 
-def check_accuracy(loader, model, device="cpu", loss_fn=None):
+def check_accuracy(loader, model, device=DEVICE, loss_fn=None):
     loss = 0.0
     num_correct = 0
     num_pixels = 0
@@ -86,7 +87,7 @@ def check_accuracy(loader, model, device="cpu", loss_fn=None):
     return loss, accuracy
 
 
-def save_predictions_as_image(loader, model, folder, device="cpu"):
+def save_predictions_as_image(loader, model, folder, device=DEVICE):
     model.eval()
     for index, (x, y) in enumerate(loader):
         if index == 5:
