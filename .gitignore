@@ -24,9 +24,14 @@ build/
 data/
 saved_images/
 models/
+logs/
 *.pth
 *.pth.tar
 *.log 
+*.png
+*.jpg
+*.jpeg
+*.heic
 
 # MacOS
 .DS_Store
