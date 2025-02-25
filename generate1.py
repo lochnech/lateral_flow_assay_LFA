@@ -15,12 +15,6 @@ LOAD_CHECKPOINT_PATH = "./models/model_checkpoint.pth.tar"
 DATA_PATH = "./data"
 
 # Define transformation for input image
-#transform = A.Compose([
- #   A.Resize(height=IMAGE_HEIGHT, width=IMAGE_WIDTH),
- #   A.Normalize(mean=[0.0, 0.0, 0.0], std=[1.0, 1.0, 1.0], max_pixel_value=255.0),
- #   ToTensorV2(),
-#])
-# Define transformation for input image
 transform = A.Compose([
     A.Rotate(limit=(90, 90), always_apply=True),  # Rotate exactly 90 degrees
     A.PadIfNeeded(min_height=IMAGE_HEIGHT, min_width=IMAGE_WIDTH, border_mode=1),
