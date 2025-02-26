@@ -64,12 +64,20 @@ def log_transformed_image(image, transformed_image, image_name):
     logging.info(f"Transformed shape: {transformed_np.shape}")
 
 def generate_transformed_data(image_path):
-    """Generate and log transformed data"""
+    """Generate and log transformed data with padding"""
     setup_logging()
     
-    # Define transform
+    # Define transform with padding
     transform = A.Compose([
-        A.Resize(height=512, width=512),
+        # First resize to maintain aspect ratio
+        A.LongestMaxSize(max_size=512),
+        # Then pad to get 512x512
+        A.PadIfNeeded(
+            min_height=512,
+            min_width=512,
+            border_mode=cv2.BORDER_CONSTANT,
+            value=[0, 0, 0]  # Black padding
+        ),
         A.Normalize(
             mean=[0.0, 0.0, 0.0],
             std=[1.0, 1.0, 1.0],
@@ -90,8 +98,10 @@ def generate_transformed_data(image_path):
         # Log the transformation
         log_transformed_image(image, transformed_image, image_name)
         
-        # Log tensor statistics
+        # Log tensor statistics and padding info
         logging.info(f"Tensor stats for {image_name}:")
+        logging.info(f"Original shape: {image.shape}")
+        logging.info(f"Transformed shape: {transformed_image.shape}")
         logging.info(f"Min value: {transformed_image.min()}")
         logging.info(f"Max value: {transformed_image.max()}")
         logging.info(f"Mean value: {transformed_image.mean()}")
@@ -135,6 +145,9 @@ def generate_mask(image_path, save_path):
 input_folder = INPUT_PATH
 output_folder = OUTPUT_PATH + "result_masks/"
 for filename in os.listdir(input_folder):
-    image_path = os.path.join(input_folder, filename)
-    save_path = os.path.join(output_folder, filename)
-    generate_mask(image_path, save_path)
+    if '.' in filename:
+        image_path = os.path.join(input_folder, filename)
+        save_path = os.path.join(output_folder, filename)
+        generate_mask(image_path, save_path)
+    else:
+        logging.warning(f"Skipping non-image file: {filename}")
