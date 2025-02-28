@@ -182,13 +182,17 @@ def generate_mask(image_path, save_path):
     cv2.imwrite(save_path, mask)
     print(f"Saved mask to: {save_path}")
 
-# Example usage
-input_folder = INPUT_PATH
-output_folder = OUTPUT_PATH + "result_masks/"
-for filename in os.listdir(input_folder):
-    if '.' in filename:
-        image_path = os.path.join(input_folder, filename)
-        save_path = os.path.join(output_folder, filename)
-        generate_mask(image_path, save_path)
-    else:
-        logging.warning(f"Skipping non-image file: {filename}")
+def main():
+    input_folder = INPUT_PATH
+    output_folder = OUTPUT_PATH + "result_masks/"
+    for filename in os.listdir(input_folder):
+        if '.' in filename:
+            image_path = os.path.join(input_folder, filename)
+            save_path = os.path.join(output_folder, filename)
+            generate_mask(image_path, save_path)
+        else:
+            logging.warning(f"Skipping non-image file: {filename}")
+
+if __name__ == "__main__":
+    main()
+    
