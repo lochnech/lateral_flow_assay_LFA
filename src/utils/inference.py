@@ -8,8 +8,8 @@ import albumentations as A
 from torchvision.transforms import transforms
 
 from dataset import LFADataset
-from utils import load_checkpoint
-from segmentation_ROI import UNET
+from src.utils import load_checkpoint
+from src.UNET.segmentation_ROI import UNET
 
 
 def pred_show_image_grid(data_path, model_pth, device):

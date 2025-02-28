@@ -4,8 +4,8 @@ from albumentations.pytorch import ToTensorV2
 import cv2
 import os
 import numpy as np
-from segmentation_ROI import UNET
-from utils import load_checkpoint
+from src.UNET.segmentation_ROI import UNET
+from src.utils import load_checkpoint
 from PIL import Image
 import matplotlib.pyplot as plt
 from datetime import datetime

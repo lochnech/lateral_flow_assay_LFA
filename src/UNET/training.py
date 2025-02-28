@@ -4,12 +4,12 @@ from albumentations.pytorch import ToTensorV2
 from tqdm import tqdm  # for progress
 import torch.nn as nn
 import torch.optim as optim
-from segmentation_ROI import UNET
+from src.UNET.segmentation_ROI import UNET
 import torchvision.transforms as transforms
 from PIL import Image
 import numpy as np
 
-from utils import (load_checkpoint, save_checkpoint, get_loaders, check_accuracy, save_predictions_as_image, )
+from src.utils import (load_checkpoint, save_checkpoint, get_loaders, check_accuracy, save_predictions_as_image, )
 
 # hyperparameters
 LEARNING_RATE = 1e-4
