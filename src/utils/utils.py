@@ -1,6 +1,6 @@
 import torch
 import torchvision
-from dataset import LFADataset
+from src.utils.dataset import LFADataset
 from torch.utils.data import DataLoader, random_split
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
