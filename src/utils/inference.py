@@ -7,8 +7,8 @@ from PIL import Image
 import albumentations as A
 from torchvision.transforms import transforms
 
-from dataset import LFADataset
-from src.utils import load_checkpoint
+from src.utils.dataset import LFADataset
+from src.utils.utils import load_checkpoint
 from src.UNET.segmentation_ROI import UNET
 
 

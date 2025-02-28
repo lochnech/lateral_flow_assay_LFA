@@ -5,7 +5,7 @@ import cv2
 import os
 import numpy as np
 from src.UNET.segmentation_ROI import UNET
-from src.utils import load_checkpoint
+from src.utils.utils import load_checkpoint
 from PIL import Image
 import matplotlib.pyplot as plt
 from datetime import datetime
