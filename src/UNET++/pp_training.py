@@ -27,18 +27,40 @@ class LFADataset(Dataset):
         self.image_dir = image_dir
         self.mask_dir = mask_dir
         self.transform = transform
-        self.images = os.listdir(image_dir)
+        
+        # Only keep images that have corresponding masks
+        self.images = []
+        for img_name in os.listdir(image_dir):
+            img_path = os.path.join(image_dir, img_name)
+            mask_path = os.path.join(mask_dir, img_name)
+            
+            # Check if both image and mask exist
+            if os.path.exists(img_path) and os.path.exists(mask_path):
+                self.images.append(img_name)
+            else:
+                print(f"Warning: Skipping {img_name} - missing image or mask")
+
+        if not self.images:
+            raise RuntimeError(f"No valid image/mask pairs found in {image_dir} and {mask_dir}")
 
     def __len__(self):
         return len(self.images)
 
     def __getitem__(self, index):
-        img_path = os.path.join(self.image_dir, self.images[index])
-        mask_path = os.path.join(self.mask_dir, self.images[index])
+        img_name = self.images[index]
+        img_path = os.path.join(self.image_dir, img_name)
+        mask_path = os.path.join(self.mask_dir, img_name)
         
+        # Read image and mask with error checking
         image = cv2.imread(img_path)
+        if image is None:
+            raise RuntimeError(f"Failed to load image: {img_path}")
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        
         mask = cv2.imread(mask_path, cv2.IMREAD_GRAYSCALE)
+        if mask is None:
+            raise RuntimeError(f"Failed to load mask: {mask_path}")
+            
         mask = mask / 255.0  # Normalize to [0, 1]
 
         if self.transform:
@@ -144,6 +166,9 @@ def main():
 
     print(f"Starting training on device: {DEVICE}")
     print(f"Training logs will be saved to: {CSV_PATH}")
+    
+    print("Available images:", os.listdir(TRAIN_IMG_DIR))
+    print("Available masks:", os.listdir(TRAIN_MASK_DIR))
     
     # Training loop
     for epoch in range(NUM_EPOCHS):
