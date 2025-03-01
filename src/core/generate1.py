@@ -15,7 +15,7 @@ import logging
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 IMAGE_HEIGHT = 512
 IMAGE_WIDTH = 512
-LOAD_CHECKPOINT_PATH = "./models/model_checkpoint.pth.tar"
+LOAD_CHECKPOINT_PATH = "./src/UNET/model_checkpoint.pth.tar"
 DATA_PATH = "./data"
 INPUT_PATH = DATA_PATH + "/test_images/"
 OUTPUT_PATH = DATA_PATH + "/result_images/"
