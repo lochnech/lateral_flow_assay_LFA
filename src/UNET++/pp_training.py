@@ -8,6 +8,7 @@ import os
 import numpy as np
 import csv
 from datetime import datetime
+from PIL import Image
 
 # Constants
 LEARNING_RATE = 1e-4
@@ -42,10 +43,20 @@ class LFADataset(Dataset):
         mask_name = f"{image_number}_mask.gif"
         mask_path = os.path.join(self.mask_dir, mask_name)
         
+        print(f"Loading mask from: {mask_path}")
+        print(f"File exists: {os.path.exists(mask_path)}")
+        
         image = cv2.imread(img_path)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        mask = cv2.imread(mask_path, cv2.IMREAD_GRAYSCALE)
-        mask = mask / 255.0  # Normalize to [0, 1]
+        
+        # Make sure your image loading is robust
+        try:
+            mask = np.array(Image.open(mask_path).convert("L"), dtype=np.float32)
+            if mask is None:
+                print(f"Warning: Mask loaded as None from {mask_path}")
+        except Exception as e:
+            print(f"Error loading mask {mask_path}: {str(e)}")
+            mask = np.zeros((IMAGE_HEIGHT, IMAGE_WIDTH), dtype=np.float32)  # Create empty mask
 
         if self.transform:
             augmented = self.transform(image=image, mask=mask)
