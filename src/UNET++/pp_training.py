@@ -9,6 +9,8 @@ import numpy as np
 import csv
 from datetime import datetime
 from PIL import Image
+import signal
+import sys
 
 # Constants
 LEARNING_RATE = 1e-4
@@ -128,7 +130,21 @@ def log_metrics(epoch, avg_loss, deep_losses, csv_path):
         writer = csv.DictWriter(f, fieldnames=metrics.keys())
         writer.writerow(metrics)
 
+def signal_handler(sig, frame):
+    print('\nGracefully shutting down...')
+    # Save checkpoint before exiting
+    checkpoint = {
+        "state_dict": model.state_dict(),
+        "optimizer": optimizer.state_dict(),
+        "epoch": epoch,
+    }
+    save_checkpoint(checkpoint)
+    sys.exit(0)
+
 def main():
+    # Register signal handler
+    signal.signal(signal.SIGINT, signal_handler)
+    
     train_transform = A.Compose([
         A.Resize(height=IMAGE_HEIGHT, width=IMAGE_WIDTH),
         A.Rotate(limit=35, p=0.5),
@@ -163,26 +179,36 @@ def main():
     print(f"Training logs will be saved to: {CSV_PATH}")
     
     # Training loop
-    for epoch in range(NUM_EPOCHS):
-        avg_loss, deep_losses = train_fn(train_loader, model, optimizer, loss_fn, epoch)
-        
-        # Log metrics
-        log_metrics(epoch + 1, avg_loss, deep_losses, CSV_PATH)
-        
-        # Print progress
-        print(f"Epoch: {epoch+1}")
-        print(f"Average Loss: {avg_loss:.4f}")
-        print(f"Deep Supervision Losses: {[f'{l:.4f}' for l in deep_losses]}")
-        print("-" * 50)
-        
-        # Save checkpoint every 10 epochs
-        if (epoch + 1) % 10 == 0:
-            checkpoint = {
-                "state_dict": model.state_dict(),
-                "optimizer": optimizer.state_dict(),
-                "epoch": epoch,
-            }
-            save_checkpoint(checkpoint)
+    try:
+        for epoch in range(NUM_EPOCHS):
+            avg_loss, deep_losses = train_fn(train_loader, model, optimizer, loss_fn, epoch)
+            
+            # Log metrics
+            log_metrics(epoch + 1, avg_loss, deep_losses, CSV_PATH)
+            
+            # Print progress
+            print(f"Epoch: {epoch+1}")
+            print(f"Average Loss: {avg_loss:.4f}")
+            print(f"Deep Supervision Losses: {[f'{l:.4f}' for l in deep_losses]}")
+            print("-" * 50)
+            
+            # Save checkpoint every 10 epochs
+            if (epoch + 1) % 10 == 0:
+                checkpoint = {
+                    "state_dict": model.state_dict(),
+                    "optimizer": optimizer.state_dict(),
+                    "epoch": epoch,
+                }
+                save_checkpoint(checkpoint)
+    except KeyboardInterrupt:
+        print('\nTraining interrupted by user')
+        # Save checkpoint before exiting
+        checkpoint = {
+            "state_dict": model.state_dict(),
+            "optimizer": optimizer.state_dict(),
+            "epoch": epoch,
+        }
+        save_checkpoint(checkpoint)
 
 if __name__ == "__main__":
     main()
