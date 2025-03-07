@@ -43,8 +43,8 @@ class LFADataset(Dataset):
         mask_name = f"{image_number}_mask.gif"
         mask_path = os.path.join(self.mask_dir, mask_name)
         
-        print(f"Loading mask from: {mask_path}")
-        print(f"File exists: {os.path.exists(mask_path)}")
+        # print(f"Loading mask from: {mask_path}")
+        # print(f"File exists: {os.path.exists(mask_path)}")
         
         image = cv2.imread(img_path)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
