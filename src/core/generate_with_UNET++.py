@@ -138,15 +138,21 @@ def generate_mask(image_path, model_path, save_path):
 def main():
     """Main function to process images"""
     # Example usage
-    image_path = "data/test_images/test_image.jpg"
+    INPUT_PATH = "data/test_images/"
+    OUTPUT_PATH = "data/result_masks/"
     model_path = "models/unetpp_checkpoint.pth.tar"
     save_path = "outputs/masks/test_mask.png"
-    
-    try:
-        mask = generate_mask(image_path, model_path, save_path)
-        print("Successfully generated mask")
-    except Exception as e:
-        print(f"Error: {str(e)}")
+    for filename in os.listdir(INPUT_PATH):
+        try:
+            if '.' in filename:
+                image_path = os.path.join(INPUT_PATH, filename)
+                save_path = os.path.join(OUTPUT_PATH, filename)
+                generate_mask(image_path, model_path, save_path)
+            else:
+                logging.warning(f"Skipping non-image file: {filename}")
+        except Exception as e:
+            logging.error(f"Error processing {filename}: {str(e)}")
+            raise e
 
 if __name__ == "__main__":
     main()
