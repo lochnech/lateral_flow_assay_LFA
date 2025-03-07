@@ -11,6 +11,7 @@ from datetime import datetime
 from PIL import Image
 import signal
 import sys
+import argparse
 
 # Constants
 LEARNING_RATE = 1e-4
@@ -51,7 +52,6 @@ class LFADataset(Dataset):
         image = cv2.imread(img_path)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         
-        # Make sure your image loading is robust
         try:
             mask = np.array(Image.open(mask_path).convert("L"), dtype=np.float32)
             if mask is None:
@@ -141,7 +141,22 @@ def signal_handler(sig, frame):
     save_checkpoint(checkpoint)
     sys.exit(0)
 
+def load_checkpoint(checkpoint_path, model, optimizer):
+    print(f"Loading checkpoint from {checkpoint_path}")
+    checkpoint = torch.load(checkpoint_path, map_location=DEVICE)
+    model.load_state_dict(checkpoint["state_dict"])
+    optimizer.load_state_dict(checkpoint["optimizer"])
+    start_epoch = checkpoint["epoch"] + 1
+    print(f"Resuming from epoch {start_epoch}")
+    return start_epoch
+
 def main():
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description='Train UNET++ model')
+    parser.add_argument('--checkpoint', type=str, help='Path to custom checkpoint file to resume training from')
+    parser.add_argument('-r', '--reset', action='store_true', help='Start training from scratch, ignoring any existing checkpoint')
+    args = parser.parse_args()
+
     # Register signal handler
     signal.signal(signal.SIGINT, signal_handler)
     
@@ -178,9 +193,22 @@ def main():
     print(f"Starting training on device: {DEVICE}")
     print(f"Training logs will be saved to: {CSV_PATH}")
     
+    # Load checkpoint if specified or if default checkpoint exists
+    start_epoch = 0
+    if not args.reset:
+        if args.checkpoint:
+            start_epoch = load_checkpoint(args.checkpoint, model, optimizer)
+        elif os.path.exists(SAVE_CHECKPOINT_PATH):
+            start_epoch = load_checkpoint(SAVE_CHECKPOINT_PATH, model, optimizer)
+    
+    if start_epoch == 0:
+        print("Starting training from scratch")
+    else:
+        print(f"Resuming training from epoch {start_epoch}")
+    
     # Training loop
     try:
-        for epoch in range(NUM_EPOCHS):
+        for epoch in range(start_epoch, NUM_EPOCHS):
             avg_loss, deep_losses = train_fn(train_loader, model, optimizer, loss_fn, epoch)
             
             # Log metrics
