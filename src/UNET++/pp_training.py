@@ -23,7 +23,7 @@ PIN_MEMORY = True
 TRAIN_IMG_DIR = "./data/train_images/"
 TRAIN_MASK_DIR = "./data/train_masks/"
 SAVE_CHECKPOINT_PATH = "./models/unetpp_checkpoint.pth.tar"
-CSV_PATH = "./training_logs.csv"
+CSV_PATH = "./logs/training_logs.csv"
 
 class LFADataset(Dataset):
     def __init__(self, image_dir, mask_dir, transform=None):
