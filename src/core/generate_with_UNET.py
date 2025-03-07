@@ -4,7 +4,7 @@ from albumentations.pytorch import ToTensorV2
 import cv2
 import os
 import numpy as np
-from segmentation_ROIpp import UNETpp
+from src.UNET.segmentation_ROI import UNET
 from src.utils.utils import load_checkpoint
 from PIL import Image
 import matplotlib.pyplot as plt
@@ -98,8 +98,10 @@ def generate_transformed_data(image_path):
         # Log the transformation
         log_transformed_image(image, transformed_image, image_name)
         
-        # Log tensor statistics
+        # Log tensor statistics and padding info
         logging.info(f"Tensor stats for {image_name}:")
+        logging.info(f"Original shape: {image.shape}")
+        logging.info(f"Transformed shape: {transformed_image.shape}")
         logging.info(f"Min value: {transformed_image.min()}")
         logging.info(f"Max value: {transformed_image.max()}")
         logging.info(f"Mean value: {transformed_image.mean()}")
@@ -111,38 +113,74 @@ def generate_transformed_data(image_path):
         logging.error(f"Error processing {image_name}: {str(e)}")
         raise e
 
-def generate_mask(image_path, model_path, save_path):
-    """Generate segmentation mask using UNET++ model"""
-    # Setup device
-    device = "cuda" if torch.cuda.is_available() else "cpu"
+# Load model
+model = UNET(in_channels=3, out_channels=1).to(DEVICE)
+load_checkpoint(torch.load(LOAD_CHECKPOINT_PATH, map_location=DEVICE), model)
+model.eval()
+
+# Function to generate mask
+def generate_mask(image_path, save_path):
+    # Define the transformation pipeline
+    transform = A.Compose([
+        # First resize to maintain aspect ratio
+        A.LongestMaxSize(max_size=512),
+        # Then pad to get 512x512
+        A.PadIfNeeded(
+            min_height=512,
+            min_width=512,
+            border_mode=cv2.BORDER_CONSTANT,
+            value=[0, 0, 0]  # Black padding
+        ),
+        A.Normalize(
+            mean=[0.0, 0.0, 0.0],
+            std=[1.0, 1.0, 1.0],
+            max_pixel_value=255.0,
+        ),
+        ToTensorV2(),
+    ])
+    # Check if file exists
+    if not os.path.exists(image_path):
+        print(f"Error: Image file not found: {image_path}")
+        return
+        
+    # Read image with error checking
+    image = cv2.imread(image_path)
+    if image is None:
+        print(f"Error: Failed to load image: {image_path}")
+        return
+        
+    # Convert to RGB for transformations
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     
-    # Load model
-    model = UNETpp(in_channels=3, out_channels=1).to(device)
-    checkpoint = torch.load(model_path, map_location=device)
-    model.load_state_dict(checkpoint["state_dict"])
-    model.eval()
+    # Apply transformations
+    augmented = transform(image=image)
     
-    # Get transformed tensor
-    transformed_tensor = generate_transformed_data(image_path)
+    # Save transformed image before model processing
+    transformed_image = augmented["image"].permute(1, 2, 0).cpu().numpy()
+    # Denormalize
+    transformed_image = ((transformed_image * [1.0, 1.0, 1.0] + [0.0, 0.0, 0.0]) * 255).astype(np.uint8)
+    # Convert back to BGR for saving
+    transformed_image = cv2.cvtColor(transformed_image, cv2.COLOR_RGB2BGR)
     
-    # Add batch dimension and send to device
-    input_tensor = transformed_tensor.unsqueeze(0).to(device)
+    # Create padded_images directory if it doesn't exist
+    padded_dir = "./data/padded_images/"
+    os.makedirs(padded_dir, exist_ok=True)
     
-    # Get predictions (UNET++ returns multiple outputs)
+    # Save transformed image
+    padded_path = os.path.join(padded_dir, os.path.basename(image_path))
+    cv2.imwrite(padded_path, transformed_image)
+    print(f"Saved transformed image to: {padded_path}")
+    
+    # Continue with model processing
+    input_tensor = augmented["image"].unsqueeze(0).to(DEVICE)
+    
     with torch.no_grad():
-        outputs = model(input_tensor)
-        # Use the final output (last element in the list)
-        mask = torch.sigmoid(outputs[-1]).cpu().numpy().squeeze()
-        mask = (mask > 0.5).astype(np.uint8) * 255
+        output = model(input_tensor)
+        mask = torch.sigmoid(output).cpu().numpy().squeeze()
+        mask = (mask > 0.5).astype(np.uint8) * 255  # Thresholding for binary mask
     
-    # Create output directory if it doesn't exist
-    os.makedirs(os.path.dirname(save_path), exist_ok=True)
-    
-    # Save mask
     cv2.imwrite(save_path, mask)
-    print(f"Mask saved to {save_path}")
-    
-    return mask
+    print(f"Saved mask to: {save_path}")
 
 def main():
     input_folder = INPUT_PATH
@@ -151,7 +189,7 @@ def main():
         if '.' in filename:
             image_path = os.path.join(input_folder, filename)
             save_path = os.path.join(output_folder, filename)
-            generate_mask(image_path, LOAD_CHECKPOINT_PATH, save_path)
+            generate_mask(image_path, save_path)
         else:
             logging.warning(f"Skipping non-image file: {filename}")
 
