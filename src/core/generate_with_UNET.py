@@ -4,6 +4,13 @@ from albumentations.pytorch import ToTensorV2
 import cv2
 import os
 import numpy as np
+import sys
+from pathlib import Path
+
+# Add the project root to the Python path
+project_root = str(Path(__file__).parent.parent.parent)
+sys.path.append(project_root)
+
 from src.UNET.segmentation_ROI import UNET
 from src.utils.utils import load_checkpoint
 from PIL import Image
@@ -15,7 +22,7 @@ import logging
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 IMAGE_HEIGHT = 512
 IMAGE_WIDTH = 512
-LOAD_CHECKPOINT_PATH = "./src/UNET/model_checkpoint.pth.tar"
+LOAD_CHECKPOINT_PATH = os.path.join(project_root, "src", "UNET", "models", "model_checkpoint.pth.tar")
 DATA_PATH = "./data"
 INPUT_PATH = DATA_PATH + "/test_images/"
 OUTPUT_PATH = DATA_PATH + "/result_images/"
@@ -63,20 +70,44 @@ def log_transformed_image(image, transformed_image, image_name):
     logging.info(f"Original shape: {image.shape}")
     logging.info(f"Transformed shape: {transformed_np.shape}")
 
+def get_background_color(image):
+    """Extract the background color from the image edges"""
+    # Sample from the edges of the image
+    edges = np.concatenate([
+        image[0, :],  # top edge
+        image[-1, :],  # bottom edge
+        image[:, 0],  # left edge
+        image[:, -1]  # right edge
+    ])
+    
+    # Get the most common color (mode) from the edges
+    # Reshape to 2D array of pixels
+    edges_reshaped = edges.reshape(-1, 3)
+    # Get unique colors and their counts
+    unique_colors, counts = np.unique(edges_reshaped, axis=0, return_counts=True)
+    # Get the most common color
+    background_color = unique_colors[np.argmax(counts)]
+    
+    return background_color
+
 def generate_transformed_data(image_path):
     """Generate and log transformed data with padding"""
     setup_logging()
+    
+    # Load image first to get background color
+    image = np.array(Image.open(image_path).convert("RGB"))
+    background_color = get_background_color(image)
     
     # Define transform with padding
     transform = A.Compose([
         # First resize to maintain aspect ratio
         A.LongestMaxSize(max_size=512),
-        # Then pad to get 512x512
+        # Then pad to get 512x512 using background color
         A.PadIfNeeded(
             min_height=512,
             min_width=512,
             border_mode=cv2.BORDER_CONSTANT,
-            value=[0, 0, 0]  # Black padding
+            value=background_color.tolist()  # Use background color for padding
         ),
         A.Normalize(
             mean=[0.0, 0.0, 0.0],
@@ -86,8 +117,6 @@ def generate_transformed_data(image_path):
         ToTensorV2(),
     ])
     
-    # Load and transform image
-    image = np.array(Image.open(image_path).convert("RGB"))
     image_name = os.path.basename(image_path).split('.')[0]
     
     try:
@@ -102,6 +131,7 @@ def generate_transformed_data(image_path):
         logging.info(f"Tensor stats for {image_name}:")
         logging.info(f"Original shape: {image.shape}")
         logging.info(f"Transformed shape: {transformed_image.shape}")
+        logging.info(f"Background color used: {background_color}")
         logging.info(f"Min value: {transformed_image.min()}")
         logging.info(f"Max value: {transformed_image.max()}")
         logging.info(f"Mean value: {transformed_image.mean()}")
@@ -115,21 +145,47 @@ def generate_transformed_data(image_path):
 
 # Load model
 model = UNET(in_channels=3, out_channels=1).to(DEVICE)
-load_checkpoint(torch.load(LOAD_CHECKPOINT_PATH, map_location=DEVICE), model)
-model.eval()
+
+# Load checkpoint with error handling
+try:
+    if not os.path.exists(LOAD_CHECKPOINT_PATH):
+        raise FileNotFoundError(f"Checkpoint file not found at: {LOAD_CHECKPOINT_PATH}")
+    
+    print(f"Loading checkpoint from: {LOAD_CHECKPOINT_PATH}")
+    checkpoint = torch.load(LOAD_CHECKPOINT_PATH, map_location=DEVICE)
+    load_checkpoint(checkpoint, model)
+    model.eval()
+    print("Model loaded successfully")
+except Exception as e:
+    print(f"Error loading checkpoint: {str(e)}")
+    print("Please ensure you have trained the model and the checkpoint file exists.")
+    sys.exit(1)
 
 # Function to generate mask
 def generate_mask(image_path, save_path):
+    # Load image first to get background color
+    image = cv2.imread(image_path)
+    if image is None:
+        print(f"Error: Failed to load image: {image_path}")
+        return
+    
+    # Convert to RGB for color analysis
+    image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    background_color = get_background_color(image_rgb)
+    
+    # Print background color for debugging
+    print(f"Background color detected: {background_color}")
+    
     # Define the transformation pipeline
     transform = A.Compose([
         # First resize to maintain aspect ratio
         A.LongestMaxSize(max_size=512),
-        # Then pad to get 512x512
+        # Then pad to get 512x512 using background color
         A.PadIfNeeded(
             min_height=512,
             min_width=512,
             border_mode=cv2.BORDER_CONSTANT,
-            value=[0, 0, 0]  # Black padding
+            value=background_color.tolist()  # Use background color for padding
         ),
         A.Normalize(
             mean=[0.0, 0.0, 0.0],
@@ -138,18 +194,8 @@ def generate_mask(image_path, save_path):
         ),
         ToTensorV2(),
     ])
-    # Check if file exists
-    if not os.path.exists(image_path):
-        print(f"Error: Image file not found: {image_path}")
-        return
-        
-    # Read image with error checking
-    image = cv2.imread(image_path)
-    if image is None:
-        print(f"Error: Failed to load image: {image_path}")
-        return
-        
-    # Convert to RGB for transformations
+    
+    # Convert back to RGB for transformations
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     
     # Apply transformations
@@ -157,18 +203,17 @@ def generate_mask(image_path, save_path):
     
     # Save transformed image before model processing
     transformed_image = augmented["image"].permute(1, 2, 0).cpu().numpy()
-    # Denormalize
+    
+    # Denormalize and convert to uint8
     transformed_image = ((transformed_image * [1.0, 1.0, 1.0] + [0.0, 0.0, 0.0]) * 255).astype(np.uint8)
-    # Convert back to BGR for saving
-    transformed_image = cv2.cvtColor(transformed_image, cv2.COLOR_RGB2BGR)
     
     # Create padded_images directory if it doesn't exist
     padded_dir = "./data/padded_images/"
     os.makedirs(padded_dir, exist_ok=True)
     
-    # Save transformed image
+    # Save transformed image in RGB format first
     padded_path = os.path.join(padded_dir, os.path.basename(image_path))
-    cv2.imwrite(padded_path, transformed_image)
+    cv2.imwrite(padded_path, cv2.cvtColor(transformed_image, cv2.COLOR_RGB2BGR))
     print(f"Saved transformed image to: {padded_path}")
     
     # Continue with model processing
@@ -179,16 +224,23 @@ def generate_mask(image_path, save_path):
         mask = torch.sigmoid(output).cpu().numpy().squeeze()
         mask = (mask > 0.5).astype(np.uint8) * 255  # Thresholding for binary mask
     
+    # Ensure output directory exists
+    os.makedirs(os.path.dirname(save_path), exist_ok=True)
     cv2.imwrite(save_path, mask)
     print(f"Saved mask to: {save_path}")
 
 def main():
     input_folder = INPUT_PATH
     output_folder = OUTPUT_PATH + "result_masks/"
+    
+    # Create output directory if it doesn't exist
+    os.makedirs(output_folder, exist_ok=True)
+    
     for filename in os.listdir(input_folder):
         if '.' in filename:
             image_path = os.path.join(input_folder, filename)
             save_path = os.path.join(output_folder, filename)
+            print(f"\nProcessing image: {filename}")
             generate_mask(image_path, save_path)
         else:
             logging.warning(f"Skipping non-image file: {filename}")
