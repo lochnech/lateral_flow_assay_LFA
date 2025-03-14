@@ -8,7 +8,16 @@ import matplotlib.pyplot as plt
 from datetime import datetime
 import logging
 import cv2
-from segmentation_ROIpp import UNETpp
+import sys
+from pathlib import Path
+
+# Add the project root to the Python path
+project_root = str(Path(__file__).parent.parent.parent)
+sys.path.append(project_root)
+
+from src.UNETpp.segmentation_ROIpp import UNETpp
+
+
 
 def setup_logging():
     """Sets up logging configuration for transformation results"""
@@ -139,7 +148,7 @@ def main():
     """Main function to process images"""
     # Example usage
     INPUT_PATH = "data/test_images/"
-    OUTPUT_PATH = "data/result_masks/"
+    OUTPUT_PATH = "data/result_masks/UNETpp/"
     model_path = "models/unetpp_checkpoint.pth.tar"
     save_path = "outputs/masks/test_mask.png"
     for filename in os.listdir(INPUT_PATH):
