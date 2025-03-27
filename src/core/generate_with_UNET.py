@@ -173,9 +173,6 @@ def generate_mask(image_path, save_path):
     image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     background_color = get_background_color(image_rgb)
     
-    # Print background color for debugging
-    print(f"Background color detected: {background_color}")
-    
     # First resize while maintaining aspect ratio
     max_size = 512
     height, width = image_rgb.shape[:2]
