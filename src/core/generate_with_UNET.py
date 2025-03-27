@@ -107,7 +107,7 @@ def generate_transformed_data(image_path):
             min_height=512,
             min_width=512,
             border_mode=cv2.BORDER_CONSTANT,
-            value=background_color.tolist()  # Use background color for padding
+            value=tuple(map(int, background_color))  # Convert to tuple of integers
         ),
         A.Normalize(
             mean=[0.0, 0.0, 0.0],
@@ -176,17 +176,41 @@ def generate_mask(image_path, save_path):
     # Print background color for debugging
     print(f"Background color detected: {background_color}")
     
-    # Define the transformation pipeline
+    # First resize while maintaining aspect ratio
+    max_size = 512
+    height, width = image_rgb.shape[:2]
+    scale = min(max_size / width, max_size / height)
+    new_width = int(width * scale)
+    new_height = int(height * scale)
+    resized = cv2.resize(image_rgb, (new_width, new_height))
+    
+    # Calculate padding
+    pad_height = max_size - new_height
+    pad_width = max_size - new_width
+    top_pad = pad_height // 2
+    bottom_pad = pad_height - top_pad
+    left_pad = pad_width // 2
+    right_pad = pad_width - left_pad
+    
+    # Apply padding with background color
+    padded = cv2.copyMakeBorder(
+        resized,
+        top_pad, bottom_pad, left_pad, right_pad,
+        cv2.BORDER_CONSTANT,
+        value=tuple(map(int, background_color))
+    )
+    
+    # Create padded_images directory if it doesn't exist
+    padded_dir = "./data/padded_images/"
+    os.makedirs(padded_dir, exist_ok=True)
+    
+    # Save padded image
+    padded_path = os.path.join(padded_dir, os.path.basename(image_path))
+    cv2.imwrite(padded_path, cv2.cvtColor(padded, cv2.COLOR_RGB2BGR))
+    print(f"Saved padded image to: {padded_path}")
+    
+    # Convert to tensor for model
     transform = A.Compose([
-        # First resize to maintain aspect ratio
-        A.LongestMaxSize(max_size=512),
-        # Then pad to get 512x512 using background color
-        A.PadIfNeeded(
-            min_height=512,
-            min_width=512,
-            border_mode=cv2.BORDER_CONSTANT,
-            value=background_color.tolist()  # Use background color for padding
-        ),
         A.Normalize(
             mean=[0.0, 0.0, 0.0],
             std=[1.0, 1.0, 1.0],
@@ -195,30 +219,11 @@ def generate_mask(image_path, save_path):
         ToTensorV2(),
     ])
     
-    # Convert back to RGB for transformations
-    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    # Apply normalization
+    transformed = transform(image=padded)
+    input_tensor = transformed["image"].unsqueeze(0).to(DEVICE)
     
-    # Apply transformations
-    augmented = transform(image=image)
-    
-    # Save transformed image before model processing
-    transformed_image = augmented["image"].permute(1, 2, 0).cpu().numpy()
-    
-    # Denormalize and convert to uint8
-    transformed_image = ((transformed_image * [1.0, 1.0, 1.0] + [0.0, 0.0, 0.0]) * 255).astype(np.uint8)
-    
-    # Create padded_images directory if it doesn't exist
-    padded_dir = "./data/padded_images/"
-    os.makedirs(padded_dir, exist_ok=True)
-    
-    # Save transformed image in RGB format first
-    padded_path = os.path.join(padded_dir, os.path.basename(image_path))
-    cv2.imwrite(padded_path, cv2.cvtColor(transformed_image, cv2.COLOR_RGB2BGR))
-    print(f"Saved transformed image to: {padded_path}")
-    
-    # Continue with model processing
-    input_tensor = augmented["image"].unsqueeze(0).to(DEVICE)
-    
+    # Generate mask
     with torch.no_grad():
         output = model(input_tensor)
         mask = torch.sigmoid(output).cpu().numpy().squeeze()
