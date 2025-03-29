@@ -233,7 +233,7 @@ def generate_mask(image_path, save_path):
 
 def main():
     input_folder = INPUT_PATH
-    output_folder = OUTPUT_PATH + "result_masks/"
+    output_folder = OUTPUT_PATH
     
     # Create output directory if it doesn't exist
     os.makedirs(output_folder, exist_ok=True)
