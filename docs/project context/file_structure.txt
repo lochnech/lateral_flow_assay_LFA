@@ -1,0 +1,56 @@
+lateral_flow_assay_LFA/
+├── lfa/                    # Main package directory
+│   ├── __init__.py
+│   ├── core/              # Core functionality
+│   │   ├── __init__.py
+│   │   ├── mask_generation.py
+│   │   ├── mask_application.py
+│   │   └── analysis.py
+│   ├── models/            # Model implementations
+│   │   ├── __init__.py
+│   │   └── unet.py
+│   ├── utils/             # Utility functions
+│   │   ├── __init__.py
+│   │   ├── data_utils.py
+│   │   ├── image_utils.py
+│   │   └── logging_utils.py
+│   └── config/            # Configuration files
+│       ├── __init__.py
+│       ├── default_config.yaml
+│       └── training_config.yaml
+├── tests/                 # Test directory
+│   ├── __init__.py
+│   ├── test_core/
+│   ├── test_models/
+│   └── test_utils/
+├── scripts/              # Executable scripts
+│   ├── train.py
+│   ├── generate_masks.py
+│   ├── apply_masks.py
+│   └── analyze_results.py
+├── data/                 # Data directory
+│   ├── raw/             # Raw data
+│   │   ├── test_images/
+│   │   ├── train_images/
+│   │   └── train_masks/
+│   ├── processed/       # Processed data
+│   │   ├── masks/
+│   │   ├── masked_images/
+│   │   └── analysis/
+│   └── models/          # Model checkpoints
+├── docs/                # Documentation
+│   ├── api/            # API documentation
+│   ├── examples/       # Usage examples
+│   └── tutorials/      # Tutorials
+├── notebooks/          # Jupyter notebooks
+├── logs/              # Log files
+├── .github/           # GitHub configuration
+│   ├── workflows/     # CI/CD workflows
+│   └── ISSUE_TEMPLATE/
+├── setup.py           # Package setup
+├── requirements.txt   # Core dependencies
+├── requirements-dev.txt # Development dependencies
+├── pyproject.toml     # Build system configuration
+├── README.md
+├── CONTRIBUTING.md
+└── CHANGELOG.md

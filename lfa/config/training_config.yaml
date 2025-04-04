@@ -1,0 +1,116 @@
+# Training experiment settings
+experiment:
+  name: "lfa_segmentation"
+  description: "Training UNet for LFA image segmentation"
+  version: "1.0"
+  seed: 42
+
+# Model architecture
+model:
+  name: "unet"  # or "unetpp"
+  input_channels: 3
+  num_classes: 1
+  bilinear: true
+  deep_supervision: false  # for UNet++ only
+  pretrained: false
+  checkpoint_path: null  # path to pretrained weights if any
+
+# Training hyperparameters
+training:
+  batch_size: 16
+  num_epochs: 200
+  learning_rate: 0.0001
+  weight_decay: 0.0001
+  optimizer: "adam"
+  scheduler: "cosine"
+  warmup_epochs: 5
+  warmup_start_lr: 1e-6
+  min_lr: 1e-6
+  early_stopping_patience: 30
+  gradient_clipping: 1.0
+
+# Loss function
+loss:
+  name: "bce_dice"
+  weights: [0.5, 0.5]  # weights for BCE and Dice loss
+  smooth: 1.0  # smoothing factor for Dice loss
+  reduction: "mean"
+
+# Data augmentation
+augmentation:
+  image_size: [256, 256]
+  train_transforms:
+    - name: "horizontal_flip"
+      probability: 0.5
+    - name: "vertical_flip"
+      probability: 0.5
+    - name: "random_rotate90"
+      probability: 0.5
+    - name: "shift_scale_rotate"
+      probability: 0.5
+      shift_limit: 0.0625
+      scale_limit: 0.1
+      rotate_limit: 45
+    - name: "elastic_transform"
+      probability: 0.3
+      alpha: 120
+      sigma: 120 * 0.05
+      alpha_affine: 120 * 0.03
+    - name: "grid_distortion"
+      probability: 0.3
+      num_steps: 5
+      distort_limit: 0.3
+    - name: "optical_distortion"
+      probability: 0.3
+      distort_limit: 0.3
+      shift_limit: 0.3
+    - name: "random_brightness_contrast"
+      probability: 0.3
+      brightness_limit: 0.2
+      contrast_limit: 0.2
+    - name: "random_gamma"
+      probability: 0.3
+      gamma_limit: [80, 120]
+
+# Validation settings
+validation:
+  batch_size: 16
+  metrics:
+    - "iou"
+    - "dice"
+    - "accuracy"
+    - "precision"
+    - "recall"
+  save_best_only: true
+  save_last: true
+  save_interval: 1
+
+# Logging and monitoring
+logging:
+  level: "INFO"
+  tensorboard: true
+  wandb: false  # Weights & Biases integration
+  save_checkpoints: true
+  checkpoint_dir: "./checkpoints"
+  log_interval: 10  # log every N batches
+  save_interval: 1  # save every N epochs
+  log_images: true
+  num_images: 4  # number of images to log
+
+# Hardware settings
+hardware:
+  device: "cuda"  # or "cpu"
+  num_workers: 4
+  pin_memory: true
+  mixed_precision: true
+  deterministic: false
+  benchmark: true
+
+# Post-processing
+postprocessing:
+  threshold: 0.5
+  min_area: 100  # minimum area for connected components
+  morphology:
+    kernel_size: 3
+    operation: "open"  # or "close", "dilate", "erode"
+    iterations: 1

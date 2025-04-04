@@ -1,0 +1,63 @@
+# Data paths
+data:
+  train_image_dir: "./data/train/images"
+  train_mask_dir: "./data/train/masks"
+  val_image_dir: "./data/val/images"
+  val_mask_dir: "./data/val/masks"
+  test_image_dir: "./data/test/images"
+  result_dir: "./data/results"
+  log_dir: "./logs"
+
+# Model settings
+model:
+  name: "unet"  # or "unetpp"
+  input_channels: 3
+  num_classes: 1
+  bilinear: true
+  deep_supervision: false  # for UNet++ only
+
+# Training settings
+training:
+  batch_size: 8
+  num_epochs: 100
+  learning_rate: 0.001
+  weight_decay: 0.0001
+  optimizer: "adam"
+  scheduler: "reduce_lr_on_plateau"
+  patience: 10
+  min_lr: 1e-6
+  factor: 0.1
+  early_stopping_patience: 20
+
+# Data augmentation
+augmentation:
+  image_size: [256, 256]
+  horizontal_flip: true
+  vertical_flip: true
+  random_rotate: true
+  shift_scale_rotate: true
+  elastic_transform: true
+  grid_distortion: true
+  optical_distortion: true
+  brightness_contrast: true
+  random_gamma: true
+
+# Inference settings
+inference:
+  threshold: 0.5
+  device: "cuda"  # or "cpu"
+  checkpoint_path: "./checkpoints/best_model.pth"
+
+# Logging settings
+logging:
+  level: "INFO"
+  tensorboard: true
+  save_checkpoints: true
+  checkpoint_dir: "./checkpoints"
+  save_interval: 1  # save every N epochs
+
+# Hardware settings
+hardware:
+  num_workers: 4
+  pin_memory: true
+  mixed_precision: true

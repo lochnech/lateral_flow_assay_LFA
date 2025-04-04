@@ -25,6 +25,45 @@ lateral_flow_assay_LFA/
 └── saved_images/         # Generated output images
 ```
 
+## Installation
+
+### 1. Clone Repository
+```bash
+git clone <repository-url>
+cd lateral_flow_assay_LFA
+```
+
+### 2. Create Virtual Environment
+```bash
+# Create virtual environment
+python -m venv venv
+
+# Activate virtual environment
+# On Windows:
+venv\Scripts\activate
+# On macOS/Linux:
+source venv/bin/activate
+```
+
+### 3. Install Dependencies
+```bash
+# Install core dependencies
+pip install -r requirements.txt
+
+# Install development dependencies (optional)
+pip install -r requirements-dev.txt
+```
+
+### 4. Verify Installation
+```bash
+# Run tests
+pytest tests/
+
+# Check code style
+flake8 src/
+black --check src/
+```
+
 ## Key Components
 
 1. [UNET Implementation](UNET.md)
@@ -80,6 +119,26 @@ python src/core/apply_mask.py
 python src/utils/analyze_masks.py
 ```
 
+## Development Guidelines
+
+### Code Style
+- Follow PEP 8 guidelines
+- Use type hints
+- Document all functions and classes
+- Write unit tests for new features
+
+### Git Workflow
+1. Create feature branches
+2. Write descriptive commit messages
+3. Submit pull requests for review
+4. Keep documentation updated
+
+### Testing
+- Run tests before committing
+- Maintain test coverage
+- Document test cases
+- Use pytest fixtures
+
 ## Requirements
 
 - Python 3.8+
@@ -90,4 +149,18 @@ python src/utils/analyze_masks.py
 - Pillow
 - Matplotlib
 
-See `requirements.txt` for full dependencies. 
+See `requirements.txt` for full dependencies.
+
+## Support
+
+### Getting Help
+1. Check the documentation
+2. Review issue tracker
+3. Contact maintainers
+4. Join community discussions
+
+### Reporting Issues
+1. Check existing issues
+2. Provide detailed description
+3. Include error logs
+4. Share reproduction steps 

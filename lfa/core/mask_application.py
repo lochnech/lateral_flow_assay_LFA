@@ -3,7 +3,13 @@ import os
 import numpy as np
 
 def apply_mask_to_image(image_path, mask_path, output_path):
-    """Apply mask to image and save the result"""
+    """Apply mask to image and save the result
+    
+    Args:
+        image_path (str): Path to the input image
+        mask_path (str): Path to the mask image
+        output_path (str): Path to save the output image
+    """
     # Load the original image
     image = cv2.imread(image_path)
     if image is None:
@@ -54,12 +60,14 @@ def apply_mask_to_image(image_path, mask_path, output_path):
     print(f"Mask coverage: {np.count_nonzero(mask)} pixels ({np.count_nonzero(mask)/mask.size*100:.2f}%)")
     print(f"Red pixels in overlay: {np.sum(np.all(overlay == [255,0,0], axis=2))} pixels")
 
-def main():
-    # Directory containing the images
-    image_dir = "./data/test_images/"
-    mask_dir = "./data/result_images/"
-    output_dir = "./data/masked_images/"
+def process_directory(image_dir, mask_dir, output_dir):
+    """Process all images in a directory
     
+    Args:
+        image_dir (str): Directory containing input images
+        mask_dir (str): Directory containing mask images
+        output_dir (str): Directory to save output images
+    """
     # Create output directory if it doesn't exist
     os.makedirs(output_dir, exist_ok=True)
     
@@ -73,6 +81,15 @@ def main():
             
             # Apply mask and save result
             apply_mask_to_image(image_path, mask_path, output_path)
+
+def main():
+    """Main function to process all images in the input directory"""
+    # Directory containing the images
+    image_dir = "./data/test_images/"
+    mask_dir = "./data/result_images/"
+    output_dir = "./data/masked_images/"
+    
+    process_directory(image_dir, mask_dir, output_dir)
 
 if __name__ == "__main__":
     main()
