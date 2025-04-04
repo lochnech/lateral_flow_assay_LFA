@@ -1,16 +1,16 @@
 # Data paths
 data:
-  train_image_dir: "./data/train/images"
-  train_mask_dir: "./data/train/masks"
-  val_image_dir: "./data/val/images"
-  val_mask_dir: "./data/val/masks"
-  test_image_dir: "./data/test/images"
-  result_dir: "./data/results"
-  log_dir: "./logs"
+  raw_dir: "./data/raw"
+  processed_dir: "./data/processed"
+  masks_dir: "./data/processed/masks"
+  masked_images_dir: "./data/processed/masked_images"
+  analysis_dir: "./data/processed/analysis"
+  models_dir: "./data/models"
+  log_dir: "./data/logs"
 
 # Model settings
 model:
-  name: "unet"  # or "unetpp"
+  name: "unet" 
   input_channels: 3
   num_classes: 1
   bilinear: true
