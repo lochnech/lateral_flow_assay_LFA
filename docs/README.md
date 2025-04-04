@@ -9,9 +9,14 @@ lateral_flow_assay_LFA/
 ├── data/                    # Data directory
 │   ├── test_images/        # Test images
 │   ├── train_images/       # Training images
-│   └── train_masks/        # Training masks
+│   ├── train_masks/        # Training masks
+│   ├── masks/             # Generated masks
+│   ├── masked_images/     # Images with applied masks
+│   └── analysis/          # Analysis results
 ├── src/                    # Source code
 │   ├── core/              # Core functionality
+│   │   ├── generate_with_UNET.py  # Mask generation
+│   │   └── apply_mask.py          # Mask application
 │   ├── UNET/              # UNET implementation
 │   └── utils/             # Utility functions
 ├── models/                # Saved model checkpoints
@@ -29,8 +34,9 @@ lateral_flow_assay_LFA/
 
 2. [Core Functionality](core.md)
    - Image processing pipeline
-   - Mask generation
+   - Mask generation and application
    - Background color detection
+   - Analysis and visualization
 
 3. [Data Management](data.md)
    - Data organization
@@ -69,6 +75,11 @@ python src/core/generate_with_UNET.py
 python src/core/apply_mask.py
 ```
 
+5. Analyze results:
+```bash
+python src/utils/analyze_masks.py
+```
+
 ## Requirements
 
 - Python 3.8+
@@ -77,5 +88,6 @@ python src/core/apply_mask.py
 - OpenCV
 - NumPy
 - Pillow
+- Matplotlib
 
 See `requirements.txt` for full dependencies. 
