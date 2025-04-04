@@ -1,166 +1,149 @@
-# Lateral Flow Assay (LFA) Analysis Documentation
+# Lateral Flow Assay (LFA) Image Analysis
 
-This documentation provides a comprehensive overview of the LFA analysis project, which uses deep learning (UNET) for segmentation and analysis of lateral flow assay images.
+A Python package for analyzing and processing lateral flow assay (LFA) images using deep learning.
+
+## Features
+
+- **Image Segmentation**: Uses UNet architecture for accurate mask generation
+- **Mask Processing**: Tools for applying and analyzing masks
+- **Data Augmentation**: Comprehensive augmentation pipeline
+- **Analysis Tools**: Statistical analysis and visualization
+- **Configuration Management**: Flexible YAML-based configuration
+- **Testing Framework**: Comprehensive test suite with coverage reporting
+- **Logging**: Detailed logging for all operations
+- **CLI Tools**: Command-line interface for all major operations
+
+## Installation
+
+1. Clone the repository:
+```bash
+git clone https://github.com/lochnech/lateral_flow_assay_LFA.git
+cd lateral_flow_assay_LFA
+```
+
+2. Create and activate a virtual environment:
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+```
+
+3. Install dependencies:
+```bash
+pip install -r requirements.txt
+```
+
+4. Install the package in development mode:
+```bash
+pip install -e .
+```
+
+## Usage
+
+### Training
+
+```bash
+python scripts/train.py --config config/training_config.yaml
+```
+
+### Mask Generation
+
+```bash
+python scripts/generate_masks.py --config config/mask_generation_config.yaml
+```
+
+### Mask Application
+
+```bash
+python scripts/apply_masks.py --config config/mask_application_config.yaml
+```
+
+### Analysis
+
+```bash
+python scripts/analyze_results.py --config config/analysis_config.yaml
+```
+
+### Testing
+
+```bash
+# Run all tests
+python scripts/run_tests.py
+
+# Run specific tests
+python scripts/run_tests.py tests/test_core/test_mask_generation.py
+
+# Run tests with coverage
+python scripts/run_tests.py -c
+```
 
 ## Project Structure
 
 ```
 lateral_flow_assay_LFA/
-├── data/                    # Data directory
-│   ├── test_images/        # Test images
-│   ├── train_images/       # Training images
-│   ├── train_masks/        # Training masks
-│   ├── masks/             # Generated masks
-│   ├── masked_images/     # Images with applied masks
-│   └── analysis/          # Analysis results
-├── src/                    # Source code
-│   ├── core/              # Core functionality
-│   │   ├── generate_with_UNET.py  # Mask generation
-│   │   └── apply_mask.py          # Mask application
-│   ├── UNET/              # UNET implementation
-│   └── utils/             # Utility functions
-├── models/                # Saved model checkpoints
-├── docs/                  # Documentation
-├── logs/                  # Training and processing logs
-└── saved_images/         # Generated output images
+├── lfa/
+│   ├── core/
+│   │   ├── mask_generation.py
+│   │   ├── mask_application.py
+│   │   └── analysis.py
+│   ├── utils/
+│   │   ├── data_utils.py
+│   │   ├── image_utils.py
+│   │   └── logging_utils.py
+│   ├── models/
+│   │   └── unet.py
+│   └── config/
+│       ├── default_config.yaml
+│       ├── training_config.yaml
+│       ├── mask_generation_config.yaml
+│       ├── mask_application_config.yaml
+│       └── analysis_config.yaml
+├── scripts/
+│   ├── train.py
+│   ├── generate_masks.py
+│   ├── apply_masks.py
+│   ├── analyze_results.py
+│   └── run_tests.py
+├── tests/
+│   ├── test_core/
+│   ├── test_utils/
+│   ├── test_models/
+│   └── conftest.py
+├── docs/
+│   ├── api.md
+│   ├── configuration.md
+│   └── testing.md
+├── requirements.txt
+└── README.md
 ```
 
-## Installation
+## Documentation
 
-### 1. Clone Repository
+- [API Documentation](docs/api.md)
+- [Configuration Guide](docs/configuration.md)
+- [Testing Guide](docs/testing.md)
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a Pull Request
+
+## Testing
+
+Run the test suite:
 ```bash
-git clone <repository-url>
-cd lateral_flow_assay_LFA
+python scripts/run_tests.py
 ```
 
-### 2. Create Virtual Environment
+Generate coverage report:
 ```bash
-# Create virtual environment
-python -m venv venv
-
-# Activate virtual environment
-# On Windows:
-venv\Scripts\activate
-# On macOS/Linux:
-source venv/bin/activate
+python scripts/run_tests.py -c
 ```
 
-### 3. Install Dependencies
-```bash
-# Install core dependencies
-pip install -r requirements.txt
+## Acknowledgments
 
-# Install development dependencies (optional)
-pip install -r requirements-dev.txt
-```
-
-### 4. Verify Installation
-```bash
-# Run tests
-pytest tests/
-
-# Check code style
-flake8 src/
-black --check src/
-```
-
-## Key Components
-
-1. [UNET Implementation](UNET.md)
-   - Model architecture
-   - Training process
-   - Segmentation approach
-
-2. [Core Functionality](core.md)
-   - Image processing pipeline
-   - Mask generation and application
-   - Background color detection
-   - Analysis and visualization
-
-3. [Data Management](data.md)
-   - Data organization
-   - Image naming conventions
-   - Data preprocessing
-
-4. [Training Process](training.md)
-   - Training configuration
-   - Loss functions
-   - Checkpoint management
-
-5. [Usage Guide](usage.md)
-   - Installation
-   - Running the pipeline
-   - Common use cases
-
-## Quick Start
-
-1. Install dependencies:
-```bash
-pip install -r requirements.txt
-```
-
-2. Train the model:
-```bash
-python src/UNET/training.py
-```
-
-3. Generate masks:
-```bash
-python src/core/generate_with_UNET.py
-```
-
-4. Apply masks to images:
-```bash
-python src/core/apply_mask.py
-```
-
-5. Analyze results:
-```bash
-python src/utils/analyze_masks.py
-```
-
-## Development Guidelines
-
-### Code Style
-- Follow PEP 8 guidelines
-- Use type hints
-- Document all functions and classes
-- Write unit tests for new features
-
-### Git Workflow
-1. Create feature branches
-2. Write descriptive commit messages
-3. Submit pull requests for review
-4. Keep documentation updated
-
-### Testing
-- Run tests before committing
-- Maintain test coverage
-- Document test cases
-- Use pytest fixtures
-
-## Requirements
-
-- Python 3.8+
-- PyTorch
-- Albumentations
-- OpenCV
-- NumPy
-- Pillow
-- Matplotlib
-
-See `requirements.txt` for full dependencies.
-
-## Support
-
-### Getting Help
-1. Check the documentation
-2. Review issue tracker
-3. Contact maintainers
-4. Join community discussions
-
-### Reporting Issues
-1. Check existing issues
-2. Provide detailed description
-3. Include error logs
-4. Share reproduction steps 
+- UNet architecture based on [U-Net: Convolutional Networks for Biomedical Image Segmentation](https://arxiv.org/abs/1505.04597)
+- Inspired by various open-source medical image analysis projects
+- Builds on code provided by FaiazMursalin
