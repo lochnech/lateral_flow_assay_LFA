@@ -25,7 +25,7 @@ IMAGE_WIDTH = 512
 LOAD_CHECKPOINT_PATH = os.path.join(project_root, "src", "UNET", "models", "model_checkpoint.pth.tar")
 DATA_PATH = "./data"
 INPUT_PATH = DATA_PATH + "/test_images/"
-OUTPUT_PATH = DATA_PATH + "/result_images/"
+OUTPUT_PATH = DATA_PATH + "/masks/"
 
 def setup_logging():
     # Create logs directory if it doesn't exist
@@ -89,6 +89,77 @@ def get_background_color(image):
     background_color = unique_colors[np.argmax(counts)]
     
     return background_color
+
+def create_smooth_transition(image, padded_image, background_color):
+    """Create a smooth transition between the original image and padding using morphological operations"""
+    # Create a mask for the original image area
+    height, width = image.shape[:2]
+    
+    # Create initial mask
+    mask = np.ones((height, width), dtype=np.uint8) * 255
+    
+    # Create kernel for morphological operations
+    kernel_size = 25
+    kernel = np.ones((kernel_size, kernel_size), np.uint8)
+    
+    # Apply morphological operations to create a more gradual transition
+    # First dilate to expand the mask
+    dilated = cv2.dilate(mask, kernel, iterations=2)
+    
+    # Then erode to create a smoother edge
+    eroded = cv2.erode(dilated, kernel, iterations=1)
+    
+    # Apply Gaussian blur with larger kernel for smoother transition
+    blur_size = 35  # Increased blur size
+    blurred_mask = cv2.GaussianBlur(eroded, (blur_size, blur_size), 0)
+    
+    # Apply additional smoothing to make the transition even more gradual
+    blurred_mask = cv2.GaussianBlur(blurred_mask, (blur_size, blur_size), 0)
+    
+    # Normalize the blurred mask to 0-1 range
+    blurred_mask = blurred_mask.astype(float) / 255
+    
+    # Apply a power function to make the transition more gradual
+    blurred_mask = np.power(blurred_mask, 0.7)  # Adjusted power for smoother transition
+    
+    # Expand mask to 3 channels
+    blurred_mask = np.stack([blurred_mask] * 3, axis=-1)
+    
+    # Calculate padding offsets
+    padded_height, padded_width = padded_image.shape[:2]
+    top_pad = (padded_height - height) // 2
+    left_pad = (padded_width - width) // 2
+    
+    # Create the blended result
+    result = padded_image.copy()
+    
+    # Place the blended image at the correct position with padding offsets
+    result[top_pad:top_pad+height, left_pad:left_pad+width] = (
+        image * blurred_mask + 
+        background_color * (1 - blurred_mask)
+    ).astype(np.uint8)
+    
+    return result
+
+def enhance_contrast(image):
+    """Enhance image contrast using CLAHE (Contrast Limited Adaptive Histogram Equalization)"""
+    # Convert to LAB color space
+    lab = cv2.cvtColor(image, cv2.COLOR_RGB2LAB)
+    
+    # Split into channels
+    l, a, b = cv2.split(lab)
+    
+    # Apply CLAHE to L channel with more conservative parameters
+    clahe = cv2.createCLAHE(clipLimit=1.0, tileGridSize=(16,16))  # Reduced clip limit, increased tile size
+    l = clahe.apply(l)
+    
+    # Merge channels back
+    enhanced_lab = cv2.merge((l, a, b))
+    
+    # Convert back to RGB
+    enhanced = cv2.cvtColor(enhanced_lab, cv2.COLOR_LAB2RGB)
+    
+    return enhanced
 
 def generate_transformed_data(image_path):
     """Generate and log transformed data with padding"""
@@ -171,19 +242,33 @@ def generate_mask(image_path, save_path):
     
     # Convert to RGB for color analysis
     image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-    background_color = get_background_color(image_rgb)
+    
+    # Enhance contrast
+    enhanced = enhance_contrast(image_rgb)
+    
+    # Get background color from enhanced image
+    background_color = get_background_color(enhanced)
+    
+    # Print background color for debugging
+    print(f"Background color detected: {background_color}")
     
     # First resize while maintaining aspect ratio
-    max_size = 512
-    height, width = image_rgb.shape[:2]
-    scale = min(max_size / width, max_size / height)
+    # Use a larger target size to preserve more details
+    target_size = 768  # Increased from 512 to 768
+    height, width = enhanced.shape[:2]
+    
+    # Calculate scale factors for both dimensions
+    scale = min(target_size / width, target_size / height)
     new_width = int(width * scale)
     new_height = int(height * scale)
-    resized = cv2.resize(image_rgb, (new_width, new_height))
+    
+    # Use high-quality interpolation for resizing
+    resized = cv2.resize(enhanced, (new_width, new_height), 
+                        interpolation=cv2.INTER_LANCZOS4)
     
     # Calculate padding
-    pad_height = max_size - new_height
-    pad_width = max_size - new_width
+    pad_height = target_size - new_height
+    pad_width = target_size - new_width
     top_pad = pad_height // 2
     bottom_pad = pad_height - top_pad
     left_pad = pad_width // 2
@@ -197,6 +282,9 @@ def generate_mask(image_path, save_path):
         value=tuple(map(int, background_color))
     )
     
+    # Create smooth transition
+    padded = create_smooth_transition(resized, padded, background_color)
+    
     # Create padded_images directory if it doesn't exist
     padded_dir = "./data/padded_images/"
     os.makedirs(padded_dir, exist_ok=True)
@@ -206,7 +294,7 @@ def generate_mask(image_path, save_path):
     cv2.imwrite(padded_path, cv2.cvtColor(padded, cv2.COLOR_RGB2BGR))
     print(f"Saved padded image to: {padded_path}")
     
-    # Convert to tensor for model
+    # Continue with model processing
     transform = A.Compose([
         A.Normalize(
             mean=[0.0, 0.0, 0.0],
@@ -224,7 +312,16 @@ def generate_mask(image_path, save_path):
     with torch.no_grad():
         output = model(input_tensor)
         mask = torch.sigmoid(output).cpu().numpy().squeeze()
-        mask = (mask > 0.5).astype(np.uint8) * 255  # Thresholding for binary mask
+        mask = (mask > 0.35).astype(np.uint8) * 255  # Increased threshold from 0.1 to 0.35
+    
+    # Resize mask back to original dimensions
+    mask = cv2.resize(mask, (width, height), 
+                     interpolation=cv2.INTER_LINEAR)
+    
+    # Apply more conservative morphological operations
+    kernel = np.ones((2,2), np.uint8)  # Smaller kernel
+    mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel, iterations=1)  # Single iteration
+    mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel, iterations=1)  # Single iteration
     
     # Ensure output directory exists
     os.makedirs(os.path.dirname(save_path), exist_ok=True)
