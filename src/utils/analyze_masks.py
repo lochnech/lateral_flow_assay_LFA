@@ -15,27 +15,54 @@ def analyze_mask(test_image_path, mask_image_path, masked_image_path, output_pat
         print(f"Error: Failed to load one or more images for {test_image_path}")
         return
     
-    # Create figure
-    fig, axes = plt.subplots(2, 2, figsize=(12,12))
+    # Convert to grayscale for intensity analysis
+    gray = cv2.cvtColor(masked, cv2.COLOR_BGR2GRAY)
+    
+    # Calculate intensity profile
+    intensity_profile = np.mean(gray, axis=0)
+    
+    # Create figure with more subplots
+    fig = plt.figure(figsize=(15, 15))
+    gs = fig.add_gridspec(3, 2)
     
     # Plot original image
-    axes[0,0].imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
-    axes[0,0].set_title('Original Image')
+    ax1 = fig.add_subplot(gs[0, 0])
+    ax1.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+    ax1.set_title('Original Image')
     
     # Plot mask
-    axes[0,1].imshow(mask, cmap='gray')
-    axes[0,1].set_title('Mask')
+    ax2 = fig.add_subplot(gs[0, 1])
+    ax2.imshow(mask, cmap='gray')
+    ax2.set_title('Mask')
     
     # Plot masked image
-    axes[1,0].imshow(cv2.cvtColor(masked, cv2.COLOR_BGR2RGB))
-    axes[1,0].set_title('Masked Image')
+    ax3 = fig.add_subplot(gs[1, 0])
+    ax3.imshow(cv2.cvtColor(masked, cv2.COLOR_BGR2RGB))
+    ax3.set_title('Masked Image')
     
     # Plot mask applied to original
-    axes[1,1].imshow(cv2.bitwise_and(img, img, mask=mask))
-    axes[1,1].set_title('Mask Applied')
+    ax4 = fig.add_subplot(gs[1, 1])
+    ax4.imshow(cv2.bitwise_and(img, img, mask=mask))
+    ax4.set_title('Mask Applied')
+    
+    # Plot intensity heatmap
+    ax5 = fig.add_subplot(gs[2, 0])
+    heatmap = ax5.imshow(gray, cmap='hot', aspect='auto')
+    plt.colorbar(heatmap, ax=ax5)
+    ax5.set_title('Intensity Heatmap')
+    
+    # Plot intensity profile
+    ax6 = fig.add_subplot(gs[2, 1])
+    ax6.plot(intensity_profile)
+    ax6.set_title('Intensity Profile')
+    ax6.set_xlabel('Pixel Position')
+    ax6.set_ylabel('Intensity')
     
     # Add statistics
-    stats_text = f"Mask Coverage: {np.count_nonzero(mask)/mask.size*100:.2f}%"
+    stats_text = f"Mask Coverage: {np.count_nonzero(mask)/mask.size*100:.2f}%\n"
+    stats_text += f"Max Intensity: {np.max(gray)}\n"
+    stats_text += f"Min Intensity: {np.min(gray)}\n"
+    stats_text += f"Mean Intensity: {np.mean(gray):.2f}"
     fig.text(0.5, 0.01, stats_text, ha='center', fontsize=12)
     
     plt.tight_layout()
