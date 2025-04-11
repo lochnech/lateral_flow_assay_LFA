@@ -28,9 +28,9 @@ def apply_mask_to_image(image_path, mask_path, output_path):
 
 def main():
     # Directory paths
-    input_dir = "./data/padded_images/"
-    mask_dir = "./data/result_images/result_masks"
-    output_dir = "./data/masked_images/"
+    input_dir = "./data/processed/padded_images/"
+    mask_dir = "./data/processed/masks/"
+    output_dir = "./data/processed/masked_images/"
 
     # Create output directory if it doesn't exist
     os.makedirs(output_dir, exist_ok=True)
