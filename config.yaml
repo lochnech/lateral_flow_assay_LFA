@@ -1,0 +1,43 @@
+# Device configuration
+device: "cuda"  # Will be automatically set to "cpu" if CUDA is not available
+
+# Image dimensions
+image_height: 512
+image_width: 512
+
+# Model paths
+model_checkpoint_path: "./data/models/model_checkpoint.pth.tar"
+
+# Data paths
+data_path: "./data"
+input_path: "./data/ancient/raw_images/"
+output_path: "./data/ancient/masks_images/"
+padded_images_path: "./data/ancient/padded_images/"
+applied_masks_path: "./data/ancient/masks_applied_images/"
+
+# Logging configuration
+logs_path: "./logs"
+transformed_images_path: "./logs/transformed_images"
+
+# Model architecture
+model:
+  in_channels: 3
+  out_channels: 1
+
+# Image transformation parameters
+transform:
+  max_size: 512
+  padding:
+    min_height: 512
+    min_width: 512
+    border_mode: "constant"
+    value: [0, 0, 0]  # Black padding
+  normalize:
+    mean: [0.0, 0.0, 0.0]
+    std: [1.0, 1.0, 1.0]
+    max_pixel_value: 255.0
+
+# Mask generation
+mask:
+  threshold: 0.5
+  binary_value: 255 
