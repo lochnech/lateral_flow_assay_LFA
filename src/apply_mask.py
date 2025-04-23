@@ -1,8 +1,32 @@
 import cv2
 import os
 import numpy as np
+import yaml
 
-def apply_mask_to_image(image_path, mask_path, output_path):
+def overlay_mask_on_image(image_path, mask_path, output_path, background_color):
+    # Read original image and mask
+    image = cv2.imread(image_path)
+    if image is None:
+        print(f"Error: Failed to load image: {image_path}")
+        return
+        
+    mask = cv2.imread(mask_path, cv2.IMREAD_GRAYSCALE)
+    if mask is None:
+        print(f"Error: Failed to load mask: {mask_path}")
+        return
+
+    # Create output image by keeping only the parts where mask is white (255)
+    # For parts where mask is black (0), we make the image white or the specified background color
+    output = image.copy()
+    
+    # Replace black mask areas with the specified background color in the output image
+    output[mask == 0] = background_color
+    
+    # Save the result
+    cv2.imwrite(output_path, output)
+    print(f"Saved masked image to: {output_path}")
+
+def highlight_mask_in_image(image_path, mask_path, output_path):
     # Read original image and mask
     image = cv2.imread(image_path)
     if image is None:
@@ -27,10 +51,15 @@ def apply_mask_to_image(image_path, mask_path, output_path):
     print(f"Saved masked image to: {output_path}")
 
 def main():
-    # Directory paths
-    input_dir = "./data/padded_images/"
-    mask_dir = "./data/result_images/result_masks"
-    output_dir = "./data/masked_images/"
+    # Load configuration
+    with open('config.yaml', 'r') as f:
+        config = yaml.safe_load(f)
+    
+    # Directory paths from config
+    input_dir = config['padded_images_path']
+    mask_dir = config['masks_path']
+    output_dir = config['applied_masks_path']
+    background_color = config.get('mask_application', {}).get('background_color')
 
     # Create output directory if it doesn't exist
     os.makedirs(output_dir, exist_ok=True)
@@ -61,11 +90,11 @@ def main():
                     mask_found = True
                     output_path = os.path.join(output_dir, f"masked_{filename}")
                     print(f"Processing {filename} with mask {mask_name}")
-                    apply_mask_to_image(image_path, mask_path, output_path)
+                    overlay_mask_on_image(image_path, mask_path, output_path, background_color)
                     break
             
             if not mask_found:
                 print(f"Warning: No mask found for {filename}")
 
 if __name__ == "__main__":
-    main()
+    main() 

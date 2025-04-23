@@ -40,4 +40,8 @@ transform:
 # Mask generation
 mask:
   threshold: 0.5
-  binary_value: 255 
+  binary_value: 255
+
+# Mask application
+mask_application:
+  background_color: [255, 255, 255]  # White background for areas outside mask 
