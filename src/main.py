@@ -2,14 +2,20 @@ import cv2
 import os
 import numpy as np
 import matplotlib.pyplot as plt
+import yaml
 
-image_directory = './images'
+# Load configuration
+with open('config.yaml', 'r') as f:
+    config = yaml.safe_load(f)
+
+RAW_IMAGES_PATH = config['raw_images_path']
+MASKS_PATH = config['masks_path']
 
 # Loop through all images in the directory
-for filename in os.listdir(image_directory):
+for filename in os.listdir(RAW_IMAGES_PATH):
 
     # Load the image
-    image_path = os.path.join(image_directory, filename)
+    image_path = os.path.join(RAW_IMAGES_PATH, filename)
     image = cv2.imread(image_path)
     plt.imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
     plt.title('Original Image')

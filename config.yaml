@@ -10,10 +10,10 @@ model_checkpoint_path: "./data/models/model_checkpoint.pth.tar"
 
 # Data paths
 data_path: "./data"
-input_path: "./data/ancient/raw_images/"
-output_path: "./data/ancient/masks_images/"
+raw_images_path: "./data/ancient/raw_images/"
+masks_path: "./data/ancient/mask_images/"
 padded_images_path: "./data/ancient/padded_images/"
-applied_masks_path: "./data/ancient/masks_applied_images/"
+applied_masks_path: "./data/ancient/applied_masks_images/"
 
 # Logging configuration
 logs_path: "./logs"

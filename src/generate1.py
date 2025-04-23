@@ -26,8 +26,8 @@ IMAGE_HEIGHT = config['image_height']
 IMAGE_WIDTH = config['image_width']
 LOAD_CHECKPOINT_PATH = config['model_checkpoint_path']
 DATA_PATH = config['data_path']
-INPUT_PATH = config['input_path']
-OUTPUT_PATH = config['output_path']
+RAW_IMAGES_PATH = config['raw_images_path']
+MASKS_PATH = config['masks_path']
 PADDED_IMAGES_PATH = config['padded_images_path']
 LOGS_PATH = config['logs_path']
 TRANSFORMED_IMAGES_PATH = config['transformed_images_path']
@@ -191,16 +191,15 @@ def generate_mask(image_path, save_path):
         mask = torch.sigmoid(output).cpu().numpy().squeeze()
         mask = (mask > config['mask']['threshold']).astype(np.uint8) * config['mask']['binary_value']
     
+    os.makedirs(MASKS_PATH, exist_ok=True)
     cv2.imwrite(save_path, mask)
     print(f"Saved mask to: {save_path}")
 
 def main():
-    input_folder = INPUT_PATH
-    output_folder = OUTPUT_PATH + "result_masks/"
-    for filename in os.listdir(input_folder):
+    for filename in os.listdir(RAW_IMAGES_PATH):
         if '.' in filename:
-            image_path = os.path.join(input_folder, filename)
-            save_path = os.path.join(output_folder, filename)
+            image_path = os.path.join(RAW_IMAGES_PATH, filename)
+            save_path = os.path.join(MASKS_PATH, filename)
             generate_mask(image_path, save_path)
         else:
             logging.warning(f"Skipping non-image file: {filename}")
