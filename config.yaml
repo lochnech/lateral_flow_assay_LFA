@@ -24,23 +24,48 @@ model:
   in_channels: 3
   out_channels: 1
 
-# Image transformation parameters
-transform:
-  max_size: 512
-  padding:
-    min_height: 512
-    min_width: 512
-    border_mode: "constant"
-    value: [0, 0, 0]  # Black padding
-  normalize:
-    mean: [0.0, 0.0, 0.0]
-    std: [1.0, 1.0, 1.0]
-    max_pixel_value: 255.0
+# Preprocessing parameters
+preprocessing:
+  # Image transformation parameters
+  transform:
+    max_size: 512
+    padding:
+      min_height: 512
+      min_width: 512
+      border_mode: "constant"
+      value: [0, 0, 0]  # Black padding
+    normalize:
+      mean: [0.0, 0.0, 0.0]
+      std: [1.0, 1.0, 1.0]
+      max_pixel_value: 255.0
+  # Image file extensions to process
+  file_extensions: [".jpg", ".jpeg", ".png"]
 
 # Mask generation
 mask:
   threshold: 0.5
   binary_value: 255
+  
+  # Mask processing parameters
+  processing:
+    # Apply Gaussian blur to smooth the mask edges
+    gaussian_blur:
+      apply: true
+      kernel_size: 7  # Must be odd number (3, 5, 7, etc.)
+      sigma: 0        # 0 means auto-calculate based on kernel size
+      
+    # Apply dilation to expand the mask
+    dilation:
+      apply: true
+      kernel_size: 5  # Size of the structuring element
+      iterations: 2   # Number of times to apply dilation
+      
+    # Apply morphological operations (opening/closing)
+    morphology:
+      apply: true
+      operation: "close"  # Options: "open", "close"
+      kernel_size: 5
+      iterations: 1
 
 # Mask application
 mask_application:

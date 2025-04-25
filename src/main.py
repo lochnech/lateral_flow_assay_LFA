@@ -8,14 +8,13 @@ import yaml
 with open('config.yaml', 'r') as f:
     config = yaml.safe_load(f)
 
-RAW_IMAGES_PATH = config['raw_images_path']
-MASKS_PATH = config['masks_path']
+APPLIED_MASKS_PATH = config['applied_masks_path']
 
 # Loop through all images in the directory
-for filename in os.listdir(RAW_IMAGES_PATH):
+for filename in os.listdir(APPLIED_MASKS_PATH):
 
     # Load the image
-    image_path = os.path.join(RAW_IMAGES_PATH, filename)
+    image_path = os.path.join(APPLIED_MASKS_PATH, filename)
     image = cv2.imread(image_path)
     plt.imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
     plt.title('Original Image')
