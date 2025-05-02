@@ -11,9 +11,17 @@ model_checkpoint_path: "./data/models/model_checkpoint.pth.tar"
 # Data paths
 data_path: "./data"
 raw_images_path: "./data/ancient/raw_images/"
-masks_path: "./data/ancient/mask_images/"
-padded_images_path: "./data/ancient/padded_images/"
-applied_masks_path: "./data/ancient/applied_masks_images/"
+
+# UNet specific paths
+unet:
+  masks_path: "./data/ancient/mask_images/"
+  padded_images_path: "./data/ancient/padded_images/"
+  applied_masks_path: "./data/ancient/applied_masks_images/"
+
+# Mask R-CNN specific paths
+maskrcnn:
+  masks_path: "./data/ancient/maskrcnn_masks/"
+  applied_masks_path: "./data/ancient/maskrcnn_applied_masks/"
 
 # Logging configuration
 logs_path: "./logs"
