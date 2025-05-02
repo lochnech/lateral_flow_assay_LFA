@@ -23,6 +23,11 @@ maskrcnn:
   masks_path: "./data/ancient/maskrcnn_masks/"
   applied_masks_path: "./data/ancient/maskrcnn_applied_masks/"
 
+# Faster R-CNN specific paths
+fasterrcnn:
+  detections_path: "./data/ancient/fasterrcnn_detections/"
+  visualized_detections_path: "./data/ancient/fasterrcnn_visualized/"
+
 # Logging configuration
 logs_path: "./logs"
 transformed_images_path: "./logs/transformed_images"
